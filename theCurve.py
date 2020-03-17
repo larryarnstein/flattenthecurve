@@ -36,30 +36,39 @@ def sim(start, effect) :
     R0[0] = 2.1 #this was the initial reported R0, this should decline with aggressive social constraints
 
     for d in days :
-        if (d>0) : 
-            sick[d] = sick[d] + sick[d-1] + new[d]
-            dead[d] = dead[d] + dead[d-1]
-            recovered[d] = recovered[d] + recovered[d-1]
-            if (d > start) :
-                newR0 = R0[d-1] * (1-effect)
-                R0[d] = max(0.5, newR0)
-            else :
-                R0[d] = R0[d-1]
+        # determine how many people each new patient will infect
         newly_infected = int(0)
         for patient in range(int(new[d])) :
             newly_infected = newly_infected + min_max_normal(R0[d],minimum_R0,0,max_lookahead)
+            
+        # determine future outcomes for each new patient
         for n in range(int(newly_infected)) :
-            outcome = np.random.uniform()
+            #determine date of infection
             date_infected = d + min_max_normal(transmit,7,1,max_lookahead)
-            new[date_infected] = new[date_infected] + 1
+            new[date_infected] += 1
+            
+            #determine survival
+            outcome = np.random.uniform()
             if (outcome < survival) :
                 time_to_recover = min_max_normal(recovery,7,1,max_lookahead)
-                recovered[date_infected+time_to_recover] = recovered[date_infected+time_to_recover] + 1
-                sick[date_infected+time_to_recover] = sick[date_infected+time_to_recover]-1
+                recovered[date_infected+time_to_recover] += 1 
+                sick[date_infected+time_to_recover] += -1 #decrement sick on date of recovery
             else :
                 time_to_die = min_max_normal(terminal,3,1,max_lookahead)
-                dead[date_infected+time_to_die] = dead[date_infected+time_to_die]+1
-                sick[date_infected+time_to_die] = sick[date_infected+time_to_die]-1
+                dead[date_infected+time_to_die] += 1 
+                sick[date_infected+time_to_die] += -1 # decrement sick on date of death
+                
+        # setup accumulators for next day
+        sick[d+1] = (sick[d] + new[d+1]) + sick[d+1]
+        dead[d+1] = dead[d+1] + dead[d]
+        recovered[d+1] = recovered[d+1] + recovered[d]
+        
+        #adjust R0 based on lockdown date and effectiveness
+        if (d+1 > start) :
+            newR0 = R0[d] * (1-effect)
+            R0[d+1] = max(0.5, newR0)
+        else :
+            R0[d+1] = R0[d]
     
     return sick,dead,recovered,R0
 
