@@ -1,3 +1,6 @@
+#copyright: Larry Arnstein 2020
+#open source under the MIT License
+
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -14,14 +17,9 @@ minimum_R0 = 0.5 # best case R0 once lock down is fully in place
 
 max_lookahead = 60 #not a model parameter. This is the extra space we need to allocate in the arrays to capture data that happens after the end of the simulation
 
+# utility function for generating normally distributed random numbers with upper and lower bounds
 def min_max_normal(mu,sigma,lb,ub) :
     return int(round(min(ub,max(lb,np.round(np.random.normal(mu,sigma))))))
-
-
-# need to add patient zero fate to the other arrays
-
-
-days = range(duration)
 
 def sim(start, effect) : 
     np.random.seed(1)
@@ -35,6 +33,7 @@ def sim(start, effect) :
     new[0] = 1
     R0[0] = 2.1 #this was the initial reported R0, this should decline with aggressive social constraints
 
+    days = range(duration)
     for d in days :
         # determine how many people each new patient will infect
         newly_infected = int(0)
